@@ -1,0 +1,193 @@
+
+EEPROMAtTiny44a.elf:     file format elf32-avr
+
+Sections:
+Idx Name          Size      VMA       LMA       File off  Algn
+  0 .text         000000b8  00000000  00000000  00000054  2**1
+                  CONTENTS, ALLOC, LOAD, READONLY, CODE
+  1 .data         00000000  00800060  00800060  0000010c  2**0
+                  CONTENTS, ALLOC, LOAD, DATA
+  2 .comment      00000030  00000000  00000000  0000010c  2**0
+                  CONTENTS, READONLY
+  3 .note.gnu.avr.deviceinfo 0000003c  00000000  00000000  0000013c  2**2
+                  CONTENTS, READONLY
+  4 .debug_aranges 00000060  00000000  00000000  00000178  2**3
+                  CONTENTS, READONLY, DEBUGGING
+  5 .debug_info   000006ac  00000000  00000000  000001d8  2**0
+                  CONTENTS, READONLY, DEBUGGING
+  6 .debug_abbrev 00000506  00000000  00000000  00000884  2**0
+                  CONTENTS, READONLY, DEBUGGING
+  7 .debug_line   000003fe  00000000  00000000  00000d8a  2**0
+                  CONTENTS, READONLY, DEBUGGING
+  8 .debug_frame  00000024  00000000  00000000  00001188  2**2
+                  CONTENTS, READONLY, DEBUGGING
+  9 .debug_str    00000325  00000000  00000000  000011ac  2**0
+                  CONTENTS, READONLY, DEBUGGING
+ 10 .debug_loc    00000046  00000000  00000000  000014d1  2**0
+                  CONTENTS, READONLY, DEBUGGING
+ 11 .debug_ranges 00000010  00000000  00000000  00001517  2**0
+                  CONTENTS, READONLY, DEBUGGING
+
+Disassembly of section .text:
+
+00000000 <__vectors>:
+   0:	10 c0       	rjmp	.+32     	; 0x22 <__ctors_end>
+   2:	17 c0       	rjmp	.+46     	; 0x32 <__bad_interrupt>
+   4:	16 c0       	rjmp	.+44     	; 0x32 <__bad_interrupt>
+   6:	15 c0       	rjmp	.+42     	; 0x32 <__bad_interrupt>
+   8:	14 c0       	rjmp	.+40     	; 0x32 <__bad_interrupt>
+   a:	13 c0       	rjmp	.+38     	; 0x32 <__bad_interrupt>
+   c:	12 c0       	rjmp	.+36     	; 0x32 <__bad_interrupt>
+   e:	11 c0       	rjmp	.+34     	; 0x32 <__bad_interrupt>
+  10:	10 c0       	rjmp	.+32     	; 0x32 <__bad_interrupt>
+  12:	0f c0       	rjmp	.+30     	; 0x32 <__bad_interrupt>
+  14:	0e c0       	rjmp	.+28     	; 0x32 <__bad_interrupt>
+  16:	0d c0       	rjmp	.+26     	; 0x32 <__bad_interrupt>
+  18:	0c c0       	rjmp	.+24     	; 0x32 <__bad_interrupt>
+  1a:	0b c0       	rjmp	.+22     	; 0x32 <__bad_interrupt>
+  1c:	0a c0       	rjmp	.+20     	; 0x32 <__bad_interrupt>
+  1e:	09 c0       	rjmp	.+18     	; 0x32 <__bad_interrupt>
+  20:	08 c0       	rjmp	.+16     	; 0x32 <__bad_interrupt>
+
+00000022 <__ctors_end>:
+  22:	11 24       	eor	r1, r1
+  24:	1f be       	out	0x3f, r1	; 63
+  26:	cf e5       	ldi	r28, 0x5F	; 95
+  28:	d1 e0       	ldi	r29, 0x01	; 1
+  2a:	de bf       	out	0x3e, r29	; 62
+  2c:	cd bf       	out	0x3d, r28	; 61
+  2e:	02 d0       	rcall	.+4      	; 0x34 <main>
+  30:	41 c0       	rjmp	.+130    	; 0xb4 <_exit>
+
+00000032 <__bad_interrupt>:
+  32:	e6 cf       	rjmp	.-52     	; 0x0 <__vectors>
+
+00000034 <main>:
+#define F_CPU 1000000 UL;
+
+int main(void)
+{
+	//Порт А0 пин 13 на вход
+	DDRA = 0b00000000;
+  34:	1a ba       	out	0x1a, r1	; 26
+	//Настраиваем АЦП
+	ADMUX=
+  36:	81 e0       	ldi	r24, 0x01	; 1
+  38:	87 b9       	out	0x07, r24	; 7
+	(0<<MUX3)|
+	(0<<MUX4)|
+	(0<<MUX5)| //выбираем ADC1 для ввода через мультиплексер
+	(0<<REFS0)|
+	(0<<REFS1); //вибираем внешний источник
+	ADCSRB=
+  3a:	80 e1       	ldi	r24, 0x10	; 16
+  3c:	83 b9       	out	0x03, r24	; 3
+	(1<<ADLAR)| //выравнивание справо
+	(0<<ADTS0)|
+	(0<<ADTS1)|
+	(0<<ADTS2);
+	
+	ADCSRA|=
+  3e:	86 b1       	in	r24, 0x06	; 6
+  40:	84 6a       	ori	r24, 0xA4	; 164
+  42:	86 b9       	out	0x06, r24	; 6
+	(1<<ADPS2)| 
+	(0<<ADPS1)|
+	(0<<ADPS0)|//Устанавливаем прескейлер на 4
+	(1<<ADATE)|
+	(0<<ADIE);
+	DIDR0=0xff;
+  44:	9f ef       	ldi	r25, 0xFF	; 255
+  46:	91 b9       	out	0x01, r25	; 1
+	// Запуск АЦП
+	ADCSRA|=(1<<ADSC);
+  48:	86 b1       	in	r24, 0x06	; 6
+  4a:	80 64       	ori	r24, 0x40	; 64
+  4c:	86 b9       	out	0x06, r24	; 6
+	//настройка пределителя тактовой частоты контроллера
+	//CLKPR = 128;
+	//CLKPR = 4;
+	
+	//настройка всех портов на выход
+	DDRB = 0b11111111;
+  4e:	97 bb       	out	0x17, r25	; 23
+	//настройка таймера
+	TCCR0A = 0b10000011;
+  50:	83 e8       	ldi	r24, 0x83	; 131
+  52:	80 bf       	out	0x30, r24	; 48
+	TCCR0B = 0b00000010;
+  54:	82 e0       	ldi	r24, 0x02	; 2
+  56:	83 bf       	out	0x33, r24	; 51
+	OCR0A=eeprom_read_byte(0);
+  58:	80 e0       	ldi	r24, 0x00	; 0
+  5a:	90 e0       	ldi	r25, 0x00	; 0
+  5c:	11 d0       	rcall	.+34     	; 0x80 <eeprom_read_byte>
+  5e:	86 bf       	out	0x36, r24	; 54
+	
+	while (1)
+	{
+		//изменение точки скважности
+		ADCSRA|=(1<<ADSC);
+  60:	86 b1       	in	r24, 0x06	; 6
+  62:	80 64       	ori	r24, 0x40	; 64
+  64:	86 b9       	out	0x06, r24	; 6
+	#else
+		//round up by default
+		__ticks_dc = (uint32_t)(ceil(fabs(__tmp)));
+	#endif
+
+	__builtin_avr_delay_cycles(__ticks_dc);
+  66:	83 ec       	ldi	r24, 0xC3	; 195
+  68:	99 e0       	ldi	r25, 0x09	; 9
+  6a:	01 97       	sbiw	r24, 0x01	; 1
+  6c:	f1 f7       	brne	.-4      	; 0x6a <__SREG__+0x2b>
+  6e:	00 c0       	rjmp	.+0      	; 0x70 <__SREG__+0x31>
+  70:	00 00       	nop
+		_delay_ms(10);
+		OCR0A=ADCH;
+  72:	85 b1       	in	r24, 0x05	; 5
+  74:	86 bf       	out	0x36, r24	; 54
+		eeprom_update_byte(0,ADCH);
+  76:	65 b1       	in	r22, 0x05	; 5
+  78:	80 e0       	ldi	r24, 0x00	; 0
+  7a:	90 e0       	ldi	r25, 0x00	; 0
+  7c:	09 d0       	rcall	.+18     	; 0x90 <eeprom_update_byte>
+  7e:	f0 cf       	rjmp	.-32     	; 0x60 <__SREG__+0x21>
+
+00000080 <eeprom_read_byte>:
+  80:	e1 99       	sbic	0x1c, 1	; 28
+  82:	fe cf       	rjmp	.-4      	; 0x80 <eeprom_read_byte>
+  84:	1f ba       	out	0x1f, r1	; 31
+  86:	8e bb       	out	0x1e, r24	; 30
+  88:	e0 9a       	sbi	0x1c, 0	; 28
+  8a:	99 27       	eor	r25, r25
+  8c:	8d b3       	in	r24, 0x1d	; 29
+  8e:	08 95       	ret
+
+00000090 <eeprom_update_byte>:
+  90:	26 2f       	mov	r18, r22
+
+00000092 <eeprom_update_r18>:
+  92:	e1 99       	sbic	0x1c, 1	; 28
+  94:	fe cf       	rjmp	.-4      	; 0x92 <eeprom_update_r18>
+  96:	1f ba       	out	0x1f, r1	; 31
+  98:	8e bb       	out	0x1e, r24	; 30
+  9a:	e0 9a       	sbi	0x1c, 0	; 28
+  9c:	81 50       	subi	r24, 0x01	; 1
+  9e:	0d b2       	in	r0, 0x1d	; 29
+  a0:	02 16       	cp	r0, r18
+  a2:	39 f0       	breq	.+14     	; 0xb2 <eeprom_update_r18+0x20>
+  a4:	1c ba       	out	0x1c, r1	; 28
+  a6:	2d bb       	out	0x1d, r18	; 29
+  a8:	0f b6       	in	r0, 0x3f	; 63
+  aa:	f8 94       	cli
+  ac:	e2 9a       	sbi	0x1c, 2	; 28
+  ae:	e1 9a       	sbi	0x1c, 1	; 28
+  b0:	0f be       	out	0x3f, r0	; 63
+  b2:	08 95       	ret
+
+000000b4 <_exit>:
+  b4:	f8 94       	cli
+
+000000b6 <__stop_program>:
+  b6:	ff cf       	rjmp	.-2      	; 0xb6 <__stop_program>
